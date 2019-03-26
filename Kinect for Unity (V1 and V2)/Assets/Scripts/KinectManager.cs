@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Text;
 
-
 public abstract class KinectManager : MonoBehaviour
 {
 	// Display color, infrared and registrered color streams on UI
@@ -16,12 +15,21 @@ public abstract class KinectManager : MonoBehaviour
 	// Display point-cloud
 	public bool displayPointCloud;
 
+	/// <summary>
+	/// /////////////////////
+	/// </summary>
+	/// 
+	public int colorFrameWidth { get; protected set; }
+	public int colorFrameHeight { get; protected set; }
+	public int depthFrameWidth { get; protected set; }
+	public int depthFrameHeight { get; protected set; }
+
 	// Point-cloud variables
-	protected int downsampleSize { get; private set; }
+	public int downsampleSize { get; protected set; }
 	public float depthScale;
 
 	// Motor angle (only available for Kinect v1)
-	protected int kinectMotorAngle { get; private set; }
+	public int kinectMotorAngle { get; protected set; }
 
 	// Bool to keep track of whether Kinect has been initialized
 	protected bool kinectInitialized;
@@ -32,8 +40,17 @@ public abstract class KinectManager : MonoBehaviour
 	// Returns the single KinectManager instance
 	public static KinectManager Instance;
 
+	// Update variables
+	protected bool colorStreamUpdated = false;
+	protected bool infraredStreamUpdated = false;
+	protected bool depthDataUpdated = false;
+
+	public abstract void ActivateWithParameters(bool displayStreams, bool displayPointCloud, int downsampleSize, float depthScale, int kinectMotorAngle);
+
+	protected abstract void Awake();
+
 	// Initializes and creates sensor instance
-	public abstract void InitializeKinectManager();
+	public abstract void InitializeSensor();
 
 	// Checks if Kinect is initialized and ready to use. If not, there was an error during Kinect-sensor initialization
 	public abstract bool IsKinectInitialized();

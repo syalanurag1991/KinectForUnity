@@ -65,9 +65,9 @@
     <Compile Include="Assets\Scripts\KinectData.cs" />
     <Compile Include="Assets\Scripts\KinectDisplay.cs" />
     <Compile Include="Assets\Scripts\KinectManager.cs" />
-    <Compile Include="Assets\Scripts\KinectNative.cs" />
     <Compile Include="Assets\Scripts\KinectPointCloud.cs" />
     <Compile Include="Assets\Scripts\KinectV1Manager.cs" />
+    <Compile Include="Assets\Scripts\KinectV1Native.cs" />
     <Compile Include="Assets\Scripts\KinectV2Manager.cs" />
     <Compile Include="Assets\Scripts\KinectV2Native.cs" />
     <Compile Include="Assets\Scripts\OpenCVInterface.cs" />

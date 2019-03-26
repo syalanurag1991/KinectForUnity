@@ -14,60 +14,66 @@ public class KinectV1Manager : KinectManager
 	private IntPtr colorStreamHandle;
 	private IntPtr depthStreamHandle;
 
-	// Update variables
-	private bool colorStreamUpdated = false;
-	private bool infraredStreamUpdated = false;
-	private bool depthDataUpdated = false;
-
 	// Color frame buffer
 	private static byte[] colorBuffer;
 
 	// Structure needed by the coordinate mapper
-	private static KinectWrapper.NuiImageViewArea KinectCoordinatesAdjustment = new KinectWrapper.NuiImageViewArea
+	private static KinectV1Wrapper.NuiImageViewArea KinectCoordinatesAdjustment = new KinectV1Wrapper.NuiImageViewArea
 	{
 		eDigitalZoom = 0,
 		lCenterX = 0,
 		lCenterY = 0
 	};
 
-	protected void Awake()
+	protected override void Awake()
 	{
 		Instance = this;
 	}
 
-	public override void InitializeKinectManager()
+	public override void ActivateWithParameters(bool displayStreams, bool displayPointCloud, int downsampleSize, float depthScale, int kinectMotorAngle)
+	{
+		base.displayStreams = displayStreams;
+		base.displayPointCloud = displayPointCloud;
+		base.downsampleSize = downsampleSize;
+		base.depthScale = depthScale;
+		base.kinectMotorAngle = kinectMotorAngle;
+		Instance = this;
+		InitializeSensor();
+	}
+
+	public override void InitializeSensor()
 	{
 		kinectInitialized = false;
-		colorBuffer = new byte[KinectWrapper.Constants.ColorImageWidth * KinectWrapper.Constants.ColorImageHeight * KinectWrapper.Constants.BytesPerPixel];
+		colorBuffer = new byte[KinectV1Wrapper.Constants.ColorImageWidth * KinectV1Wrapper.Constants.ColorImageHeight * KinectV1Wrapper.Constants.BytesPerPixel];
 
 		int hr = 0;
 
 		try
 		{
-			hr = KinectWrapper.NuiInitialize(KinectWrapper.NuiInitializeFlags.UsesColor | KinectWrapper.NuiInitializeFlags.UsesDepth);
+			hr = KinectV1Wrapper.NuiInitialize(KinectV1Wrapper.NuiInitializeFlags.UsesColor | KinectV1Wrapper.NuiInitializeFlags.UsesDepth);
 			if (hr != 0)
 			{
 				throw new Exception("NuiInitialize Failed");
 			}
 
 			colorStreamHandle = IntPtr.Zero;
-			hr = KinectWrapper.NuiImageStreamOpen(KinectWrapper.NuiImageType.Color,
-				KinectWrapper.Constants.ColorImageResolution, 0, 2, IntPtr.Zero, ref colorStreamHandle);
+			hr = KinectV1Wrapper.NuiImageStreamOpen(KinectV1Wrapper.NuiImageType.Color,
+				KinectV1Wrapper.Constants.ColorImageResolution, 0, 2, IntPtr.Zero, ref colorStreamHandle);
 			if (hr != 0 && colorStreamHandle != IntPtr.Zero)
 			{
 				throw new Exception("Cannot open color stream");
 			}
 
 			depthStreamHandle = IntPtr.Zero;
-			hr = KinectWrapper.NuiImageStreamOpen(KinectWrapper.NuiImageType.Depth,
-				KinectWrapper.Constants.DepthImageResolution, 0, 2, IntPtr.Zero, ref depthStreamHandle);
+			hr = KinectV1Wrapper.NuiImageStreamOpen(KinectV1Wrapper.NuiImageType.Depth,
+				KinectV1Wrapper.Constants.DepthImageResolution, 0, 2, IntPtr.Zero, ref depthStreamHandle);
 			if (hr != 0)
 			{
 				throw new Exception("Cannot open depth stream");
 			}
 
 			// set kinect elevation angle
-			KinectWrapper.NuiCameraElevationSetAngle(kinectMotorAngle);
+			KinectV1Wrapper.NuiCameraElevationSetAngle(kinectMotorAngle);
 
 			DontDestroyOnLoad(gameObject);
 		}
@@ -81,7 +87,7 @@ public class KinectV1Manager : KinectManager
 		}
 		catch (Exception e)
 		{
-			string message = e.Message + " - " + KinectWrapper.GetNuiErrorString(hr);
+			string message = e.Message + " - " + KinectV1Wrapper.GetNuiErrorString(hr);
 			Debug.LogError(message);
 			Debug.LogError(e.ToString());
 			return;
@@ -104,9 +110,9 @@ public class KinectV1Manager : KinectManager
 	protected override void InitializeStorage()
 	{
 		processedKinectData = new KinectData(
-			KinectWrapper.Constants.ColorImageWidth, KinectWrapper.Constants.ColorImageHeight,
-			KinectWrapper.Constants.DepthImageWidth, KinectWrapper.Constants.DepthImageHeight,
-			KinectWrapper.Constants.BytesPerPixel, downsampleSize, gameObject.transform);
+			KinectV1Wrapper.Constants.ColorImageWidth, KinectV1Wrapper.Constants.ColorImageHeight,
+			KinectV1Wrapper.Constants.DepthImageWidth, KinectV1Wrapper.Constants.DepthImageHeight,
+			KinectV1Wrapper.Constants.BytesPerPixel, downsampleSize, gameObject.transform);
 	}
 
 	// Returns the whole block of processed kinect data
@@ -118,7 +124,7 @@ public class KinectV1Manager : KinectManager
 	// Returns color for a pixel by index
 	public override void GetColorForPixelByIndex(int colorSpaceIndex, ref Color32 color)
 	{
-		int actualIndex = KinectWrapper.Constants.BytesPerPixel * colorSpaceIndex;
+		int actualIndex = KinectV1Wrapper.Constants.BytesPerPixel * colorSpaceIndex;
 		color = new Color32(
 			processedKinectData.ColorStreamData[actualIndex],
 			processedKinectData.ColorStreamData[actualIndex + 1],
@@ -129,7 +135,7 @@ public class KinectV1Manager : KinectManager
 	// Returns color for a pixel by position
 	public override void GetColorForPixelByPosition(int x, int y, ref Color32 color)
 	{
-		int actualIndex = KinectWrapper.Constants.BytesPerPixel * (y * KinectWrapper.Constants.ColorImageWidth + x);
+		int actualIndex = KinectV1Wrapper.Constants.BytesPerPixel * (y * KinectV1Wrapper.Constants.ColorImageWidth + x);
 		color = new Color32(
 			processedKinectData.ColorStreamData[actualIndex],
 			processedKinectData.ColorStreamData[actualIndex + 1],
@@ -146,20 +152,20 @@ public class KinectV1Manager : KinectManager
 	// Returns depth for a pixel by position
 	public override void GetDepthForPixelByPosition(int x, int y, ref ushort depth)
 	{
-		depth = processedKinectData.CorrectedDepths[y * KinectWrapper.Constants.DepthImageWidth + x];
+		depth = processedKinectData.CorrectedDepths[y * KinectV1Wrapper.Constants.DepthImageWidth + x];
 	}
 
 	// Returns infrared for a pixel by index
 	public override void GetInfraredColorForPixelByIndex(int depthSpaceIndex, ref Color32 color)
 	{
-		int actualIndex = KinectWrapper.Constants.BytesPerPixel * depthSpaceIndex;
+		int actualIndex = KinectV1Wrapper.Constants.BytesPerPixel * depthSpaceIndex;
 		color = base.processedKinectData.InfraredStreamColors[actualIndex];
 	}
 
 	// Returns infrared for a pixel by position
 	public override void GetInfraredColorForPixelByPosition(int x, int y, ref Color32 color)
 	{
-		int actualIndex = KinectWrapper.Constants.BytesPerPixel * (y * KinectWrapper.Constants.DepthImageWidth + x);
+		int actualIndex = KinectV1Wrapper.Constants.BytesPerPixel * (y * KinectV1Wrapper.Constants.DepthImageWidth + x);
 		color = base.processedKinectData.InfraredStreamColors[actualIndex];
 	}
 
@@ -172,7 +178,7 @@ public class KinectV1Manager : KinectManager
 	// Returns registered color for a pixel by position
 	public override void GetRegisteredColorForPixelByPosition(int x, int y, ref Color32 color)
 	{
-		int colorSpaceIndex = KinectWrapper.Constants.BytesPerPixel * (y * KinectWrapper.Constants.DepthImageWidth + x);
+		int colorSpaceIndex = KinectV1Wrapper.Constants.BytesPerPixel * (y * KinectV1Wrapper.Constants.DepthImageWidth + x);
 		color = base.processedKinectData.RegisteredColorStreamColors[colorSpaceIndex];
 	}
 
@@ -180,8 +186,8 @@ public class KinectV1Manager : KinectManager
 	{
 		if (kinectInitialized)
 		{
-			colorStreamUpdated = (colorStreamHandle != IntPtr.Zero) && KinectWrapper.PollColor(colorStreamHandle, ref colorBuffer);
-			depthDataUpdated = depthStreamHandle != IntPtr.Zero && KinectWrapper.PollDepth(depthStreamHandle, KinectWrapper.Constants.IsNearMode, ref processedKinectData.RawDepths);
+			colorStreamUpdated = KinectV1Wrapper.PollColor(colorStreamHandle, ref colorBuffer);
+			depthDataUpdated = KinectV1Wrapper.PollDepth(depthStreamHandle, KinectV1Wrapper.Constants.IsNearMode, ref processedKinectData.RawDepths);
 
 			if (colorStreamUpdated && depthDataUpdated && (displayStreams || displayPointCloud))
 				RefreshStreamsAndPointCloud();
@@ -210,28 +216,28 @@ public class KinectV1Manager : KinectManager
 				{
 					for (int x = meshX * processedKinectData.MeshWidth; x < (meshX + 1) * processedKinectData.MeshWidth; x++)
 					{
-						int depthSpaceIndex = y * KinectWrapper.Constants.DepthImageWidth + x;
+						int depthSpaceIndex = y * KinectV1Wrapper.Constants.DepthImageWidth + x;
 						processedKinectData.CorrectedDepths[depthSpaceIndex] = (ushort)(processedKinectData.RawDepths[depthSpaceIndex] >> 3);
 
 						if (displayStreams)
 						{
-							int colorDataIndex = depthSpaceIndex * KinectWrapper.Constants.BytesPerPixel;
+							int colorDataIndex = depthSpaceIndex * KinectV1Wrapper.Constants.BytesPerPixel;
 							processedKinectData.ColorStreamData[colorDataIndex] = colorBuffer[colorDataIndex + 2];														// creating color stream 
 							processedKinectData.ColorStreamData[colorDataIndex + 1] = colorBuffer[colorDataIndex + 1];
 							processedKinectData.ColorStreamData[colorDataIndex + 2] = colorBuffer[colorDataIndex];
 							processedKinectData.ColorStreamData[colorDataIndex + 3] = 255;
 						}
 
-						if (base.processedKinectData.CorrectedDepths[depthSpaceIndex] >= KinectWrapper.Constants.MinRange &&
-							base.processedKinectData.CorrectedDepths[depthSpaceIndex] < KinectWrapper.Constants.MaxRange)
+						if (base.processedKinectData.CorrectedDepths[depthSpaceIndex] >= KinectV1Wrapper.Constants.MinRange &&
+							base.processedKinectData.CorrectedDepths[depthSpaceIndex] < KinectV1Wrapper.Constants.MaxRange)
 						{
 							int colorX = 0, colorY = 0;
-							KinectWrapper.NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
-								KinectWrapper.Constants.ColorImageResolution,
-								KinectWrapper.Constants.DepthImageResolution,
+							KinectV1Wrapper.NuiImageGetColorPixelCoordinatesFromDepthPixelAtResolution(
+								KinectV1Wrapper.Constants.ColorImageResolution,
+								KinectV1Wrapper.Constants.DepthImageResolution,
 								ref KinectCoordinatesAdjustment,
 								x, y, processedKinectData.RawDepths[depthSpaceIndex], out colorX, out colorY);
-							int actualColorIndex = KinectWrapper.Constants.BytesPerPixel * (colorY * KinectWrapper.Constants.ColorImageWidth + colorX);
+							int actualColorIndex = KinectV1Wrapper.Constants.BytesPerPixel * (colorY * KinectV1Wrapper.Constants.ColorImageWidth + colorX);
 							Color32 pixelColor = new Color32(0, 0, 0, 0);
 
 							if (actualColorIndex >= 0 && actualColorIndex < processedKinectData.ColorFrameDataLength)
@@ -294,7 +300,7 @@ public class KinectV1Manager : KinectManager
 	{
 		if (kinectInitialized)
 		{
-			KinectWrapper.NuiShutdown();																						// Shutdown OpenNI
+			KinectV1Wrapper.NuiShutdown();																						// Shutdown OpenNI
 			Instance = null;
 		}
 	}

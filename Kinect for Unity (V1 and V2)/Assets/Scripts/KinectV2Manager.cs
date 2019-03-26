@@ -17,17 +17,23 @@ public class KinectV2Manager : KinectManager
 	private InfraredFrameReader infraredFrameReader;
 	private DepthFrameReader depthFrameReader;
 
-	// Update variables
-	private bool colorStreamUpdated = false;
-	private bool infraredStreamUpdated = false;
-	private bool depthDataUpdated = false;
-
-	protected void Awake()
+	protected override void Awake()
 	{
 		Instance = this;
 	}
 
-	public override void InitializeKinectManager()
+	public override void ActivateWithParameters(bool displayStreams, bool displayPointCloud, int downsampleSize, float depthScale, int kinectMotorAngle)
+	{
+		base.displayStreams = displayStreams;
+		base.displayPointCloud = displayPointCloud;
+		base.downsampleSize = downsampleSize;
+		base.depthScale = depthScale;
+		base.kinectMotorAngle = kinectMotorAngle;
+		Instance = this;
+		InitializeSensor();
+	}
+
+	public override void InitializeSensor()
 	{
 		kinectInitialized = false;
 
@@ -142,7 +148,7 @@ public class KinectV2Manager : KinectManager
 	// Returns depth for a pixel by position
 	public override void GetDepthForPixelByPosition(int x, int y, ref ushort depth)
 	{
-		depth = base.processedKinectData.CorrectedDepths[y * KinectWrapper.Constants.DepthImageWidth + x];
+		depth = base.processedKinectData.CorrectedDepths[y * KinectV1Wrapper.Constants.DepthImageWidth + x];
 	}
 
 	// Returns infrared for a pixel by index

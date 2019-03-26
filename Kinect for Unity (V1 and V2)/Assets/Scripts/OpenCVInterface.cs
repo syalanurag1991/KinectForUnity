@@ -197,10 +197,10 @@ public class OpenCVInterface : MonoBehaviour
 
 	void InitializeStorageForFeeds()
 	{
-		rgbFrameWidth = KinectWrapper.Constants.ColorImageWidth;
-		rgbFrameHeight = KinectWrapper.Constants.ColorImageHeight;
-		depthFrameWidth = KinectWrapper.Constants.DepthImageWidth;
-		depthFrameHeight = KinectWrapper.Constants.DepthImageHeight;
+		rgbFrameWidth = KinectV1Wrapper.Constants.ColorImageWidth;
+		rgbFrameHeight = KinectV1Wrapper.Constants.ColorImageHeight;
+		depthFrameWidth = KinectV1Wrapper.Constants.DepthImageWidth;
+		depthFrameHeight = KinectV1Wrapper.Constants.DepthImageHeight;
 		rgbDataSize = rgbFrameWidth * rgbFrameHeight * 4;
 		depthDataSize = depthFrameWidth * depthFrameHeight;
 		returnedRGBData = new byte[rgbDataSize];

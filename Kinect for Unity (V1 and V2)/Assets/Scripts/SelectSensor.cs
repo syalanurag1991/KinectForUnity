@@ -18,33 +18,15 @@ public class SelectSensor : MonoBehaviour
 		if (kinectV1)
 		{
 			kinectV2 = false;
-			gameObject.AddComponent<KinectV1Manager>();
-			gameObject.GetComponent<KinectV1Manager>().enabled = true;
-			KinectManager instance = KinectManager.Instance;
-
-			instance.displayStreams = displayStreams;
-			instance.displayPointCloud = displayPointCloud;
-			instance.SetDownsampleSize(downsampleSize);
-			instance.SetMotorAngle(kinectMotorAngle);
-			instance.depthScale = depthScale;
-			instance.InitializeKinectManager();
-
+			gameObject.AddComponent<KinectV1Manager>().enabled = true;
+			KinectManager.Instance.ActivateWithParameters(displayStreams, displayPointCloud, downsampleSize, depthScale, kinectMotorAngle);
 			Destroy(GetComponent<SelectSensor>());
 		}
 		else if (kinectV2)
 		{
 			kinectV1 = false;
-			gameObject.AddComponent<KinectV2Manager>();
-			gameObject.GetComponent<KinectV2Manager>().enabled = true;
-			KinectManager instance = KinectManager.Instance;
-
-			instance.displayStreams = displayStreams;
-			instance.displayPointCloud = displayPointCloud;
-			instance.SetDownsampleSize(downsampleSize);
-			instance.SetMotorAngle(kinectMotorAngle);
-			instance.depthScale = depthScale;
-			instance.InitializeKinectManager();
-
+			gameObject.AddComponent<KinectV2Manager>().enabled = true;
+			KinectManager.Instance.ActivateWithParameters(displayStreams, displayPointCloud, downsampleSize, depthScale, kinectMotorAngle);
 			Destroy(GetComponent<SelectSensor>());
 		}
 		else
